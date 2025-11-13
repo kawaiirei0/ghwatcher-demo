@@ -1,6 +1,6 @@
 module ghw-demo
 
-go 1.25.4
+go 1.24.6
 
 require (
 	github.com/google/go-github/v57 v57.0.0 // indirect
