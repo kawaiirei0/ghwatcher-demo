@@ -5,6 +5,7 @@ set -e
 REPO_URL="https://github.com/rei0721/ghhook-server.git"
 PROJECT_DIR="/app/source" # 源码放在子目录，保持 /app 整洁
 BINARY_PATH="/app/gh"
+BINARY_SERVER_PATH="/app/server"
 
 echo ">>> 检查网络连接..."
 # 简单检查，确保能连上 GitHub，如果环境特殊可能需要配置代理
@@ -41,4 +42,26 @@ chmod +x "$BINARY_PATH"
 echo ">>> 启动应用程序..."
 echo ">>> 监听端口范围: 9900-9999"
 # 执行二进制文件
-exec "$BINARY_PATH"
+# exec "$BINARY_PATH"
+
+
+echo ">>> 启动应用程序..."
+
+# --- 关键修改开始 ---
+
+# 启动第一个服务 (假设程序接受 -port 参数，监听 9901)
+# & 符号让它在后台运行
+# 2>&1 | sed ... 的作用是给日志每一行加个前缀，方便你区分
+"$BINARY_PATH" -port 9901 2>&1 | sed 's/^/[服务-9901] /' &
+
+# 启动第二个服务 (监听 9999)
+"$BINARY_SERVER_PATH" -port 9999 2>&1 | sed 's/^/[服务-9999] /' &
+
+# 【非常重要】
+# 如果脚本直接结束，容器就会退出。
+# wait 命令会挂起脚本，等待所有后台任务结束。
+# 这样 Docker 容器才会一直运行，且能持续接收到上面两个服务的日志。
+echo ">>> 所有服务已在后台启动，开始监听日志..."
+wait
+
+# --- 关键修改结束 ---
